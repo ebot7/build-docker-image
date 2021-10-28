@@ -1,0 +1,62 @@
+name: 'e-bot7 core docker image builder'
+description: 'Use this action to build and push docker images to ECR'
+inputs:
+  ecr-repository:
+    required: true
+    description: name of the ecr namespace, for e.g. 'ebot7/bot-engine'
+  app-name:
+    required: true
+    description: name of the app being built, for e.g. 'bot-engine'
+outputs:
+    IMAGE_TAG: 
+        description: Docker tag of image which is based on commit sha
+        value: ${{ steps.sha.outputs.sha_short }}
+runs:
+    using: composite
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Create short SHA
+        id: sha
+        shell: bash
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.ecr-repository }}
+          APP_NAME: ${{ inputs.app-name }}
+          COMMIT: ${{ steps.sha.outputs.sha_short}}
+        run: |
+          app_version="${{ github.ref }}-${{ github.run_id }}-$COMMIT"
+          build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
+          branch=$(echo ${{ github.ref }} | sed "s/refs\/heads\///g" | sed -r 's/[^-_.a-zA-Z0-9]+/_/g')
+          docker build \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$APP_NAME-$branch-$COMMIT \
+            --label io.eb7.git_branch="$branch" \
+            --label io.eb7.app_version="$app_version" \
+            --label io.eb7.service="$APP_NAME" \
+            --label io.eb7.log_format=json \
+            --label io.eb7.group=application \
+            --label org.label-schema.schema-version="1.0.0-rc.1" \
+            --label org.label-schema.vendor="e-bot7 GmbH" \
+            --label org.label-schema.build-date="$build_timestamp" \
+            --label org.label-schema.name="$ECR_REPOSITORY" \
+            --label org.label-schema.version="$app_version" \
+            --build-arg EB7_APP_VERSION=$app_version \
+            .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
