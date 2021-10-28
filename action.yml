@@ -3,10 +3,10 @@ description: 'Use this action to build and push docker images to ECR'
 inputs:
   ecr-repository:
     required: true
-    description: name of the ecr namespace, for e.g. 'ebot7/bot-engine'
+    description: name of the ecr namespace
   app-name:
     required: true
-    description: name of the app being built, for e.g. 'bot-engine'
+    description: name of the app being built
   aws-access-key-id:  
     required: true
     description: aws creds to login to ecr repo
