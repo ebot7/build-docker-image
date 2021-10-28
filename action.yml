@@ -8,7 +8,7 @@ inputs:
     required: true
     description: name of the app being built, for e.g. 'bot-engine'
 outputs:
-    IMAGE_TAG: 
+    image_tag: 
         description: Docker tag of image which is based on commit sha
         value: ${{ steps.sha.outputs.sha_short }}
 runs:
