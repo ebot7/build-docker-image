@@ -7,6 +7,12 @@ inputs:
   app-name:
     required: true
     description: name of the app being built, for e.g. 'bot-engine'
+  aws-access-key-id:  
+    required: true
+    description: aws creds to login to ecr repo
+  aws-secret-access-key:  
+    required: true
+    description: aws creds to login to ecr repo
 outputs:
     image_tag: 
         description: Docker tag of image which is based on commit sha
@@ -19,8 +25,8 @@ runs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ inputs.aws-access-key-id }}
+          aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
           aws-region: eu-central-1
 
       - name: Login to Amazon ECR
