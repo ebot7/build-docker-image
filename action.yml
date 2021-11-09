@@ -45,6 +45,7 @@ runs:
           ECR_REPOSITORY: ${{ inputs.ecr-repository }}
           APP_NAME: ${{ inputs.app-name }}
           COMMIT: ${{ steps.sha.outputs.sha_short}}
+          BUILDKIT_INLINE_CACHE: 1
         run: |
           app_version="${{ github.ref }}-${{ github.run_id }}-$COMMIT"
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
@@ -53,6 +54,7 @@ runs:
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$APP_NAME-$branch-$COMMIT \
+            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY \
             --label io.eb7.git_branch="$branch" \
             --label io.eb7.app_version="$app_version" \
             --label io.eb7.service="$APP_NAME" \
