@@ -50,11 +50,16 @@ runs:
           app_version="${{ github.ref }}-${{ github.run_id }}-$COMMIT"
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
           branch=$(echo ${{ github.ref }} | sed "s/refs\/heads\///g" | sed -r 's/[^-_.a-zA-Z0-9]+/_/g')
+
+          # Pull images to make caching work.
+          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$branch || docker pull $ECR_REGISTRY/$ECR_REPOSITORY:master || true
+
           docker build \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$APP_NAME-$branch-$COMMIT \
-            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY \
+            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
+            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:master \
             --label io.eb7.git_branch="$branch" \
             --label io.eb7.app_version="$app_version" \
             --label io.eb7.service="$APP_NAME" \
