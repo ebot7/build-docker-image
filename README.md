@@ -11,5 +11,6 @@ Use the following as a step in your Github workflows.
     ecr-repository: ebot7/<app-name>
     aws-secret-access-key: {{ secrets.AWS_SECRET_ACCESS_KEY }}
     aws-access-key-id: {{ secrets.AWS_ACCESS_KEY_ID }}
+    [dockerfile-path: <some-path>] // defaults to ./Dockerfile
 ```
 Replace `<app-name>` with appropriate string before running
