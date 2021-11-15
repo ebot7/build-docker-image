@@ -10,7 +10,7 @@ inputs:
   build-arg:
     required: false
     description: >
-      additional build build arguments to be passed when building the dockerfile.
+      additional build arguments to be passed when building the dockerfile.
       This should have the form "ARG_NAME=value".
   secret:
     required: false
