@@ -79,10 +79,10 @@ runs:
             # As of https://stackoverflow.com/questions/19771965/split-bash-string-by-newline-characters
             IFS=$'\n' build_args_list=($build_args_unparsed)
 
-            set_additional_build_arg='' 
+            set_additional_build_args=''
             for item in ${build_args_list[@]}
             do
-              set_additional_build_arg="${set_additional_build_arg} --build-arg ${item}"
+              set_additional_build_args="${set_additional_build_args} --build-arg ${item}"
             done
             echo "Using build argument(s): ${build_args_list}"
           fi
@@ -111,7 +111,7 @@ runs:
             --label org.label-schema.version="$app_version" \
             --build-arg EB7_APP_VERSION=$app_version \
             -f ${{ inputs.dockerfile-path }} \
-            $set_additional_build_arg \
+            $set_additional_build_args \
             $set_secret \
             .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
