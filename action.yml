@@ -71,13 +71,13 @@ runs:
           if [ -n '${{ inputs.build-arg }}' ]
           then
             echo "Using build argument: ${{ inputs.build-arg }}"
-            additional_build_arg="--build-arg ${{ inputs.build-arg }}"
+            set_additional_build_arg="--build-arg ${{ inputs.build-arg }}"
           fi
 
           if [ -n '${{ inputs.secret }}' ]
           then
             echo "Using secret configuration: ${{ inputs.secret }}"
-            additional_build_arg="--secret ${{ inputs.secret }}"
+            set_secret="--secret ${{ inputs.secret }}"
           fi
 
           docker build \
@@ -98,6 +98,7 @@ runs:
             --label org.label-schema.version="$app_version" \
             --build-arg EB7_APP_VERSION=$app_version \
             -f ${{ inputs.dockerfile-path }} \
-            $additional_build_arg \
+            $set_additional_build_arg \
+            $set_secret \
             .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
