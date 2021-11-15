@@ -7,12 +7,32 @@ inputs:
   app-name:
     required: true
     description: name of the app being built
-  aws-access-key-id:  
+  build-args:
+    required: false
+    description: >
+      additional build arguments to be passed when building the dockerfile.
+      This should have the form "ARG_NAME=value". If several build arguments are required, 
+      delimit them by a newline 
+      "|
+        ARG_NAME_1=value
+        ARG_NAME_2=value2
+      "
+  secret:
+    required: false
+    description: >
+      allow providing --secret to the docker build command.
+      See https://docs.docker.com/develop/develop-images/build_enhancements/#new-docker-build-secret-information
+      for required changes to the Dockerfile.
+  aws-access-key-id:
     required: true
     description: aws creds to login to ecr repo
-  aws-secret-access-key:  
+  aws-secret-access-key:
     required: true
     description: aws creds to login to ecr repo
+  dockerfile-path:
+    required: false
+    description: The dockerfile path to build from
+    default: ./Dockerfile
 outputs:
     image_tag: 
         description: Docker tag of image which is based on commit sha
@@ -44,6 +64,7 @@ runs:
           APP_NAME: ${{ inputs.app-name }}
           COMMIT: ${{ steps.sha.outputs.sha_short}}
           BUILDKIT_INLINE_CACHE: 1
+          DOCKER_BUILDKIT: 1
         run: |
           app_version="${{ github.ref }}-${{ github.run_id }}-$COMMIT"
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
@@ -51,6 +72,28 @@ runs:
 
           # Pull images to make caching work.
           docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$branch || docker pull $ECR_REGISTRY/$ECR_REPOSITORY:master || true
+
+          if [ -n '${{ inputs.build-args }}' ]
+          then
+            build_args_unparsed=${{ inputs.build-args }}
+            # As of https://stackoverflow.com/questions/19771965/split-bash-string-by-newline-characters
+            DEFAULT_IFS=$IFS
+            IFS=$'\n' build_args_list=($build_args_unparsed)
+            IFS=$DEFAULT_IFS
+
+            set_additional_build_args=''
+            for item in ${build_args_list[@]}
+            do
+              set_additional_build_args="${set_additional_build_args} --build-arg ${item}"
+            done
+            echo "Using build argument(s): ${build_args_list}"
+          fi
+
+          if [ -n '${{ inputs.secret }}' ]
+          then
+            echo "Using secret configuration: ${{ inputs.secret }}"
+            set_secret="--secret ${{ inputs.secret }}"
+          fi
 
           docker build \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT \
@@ -69,5 +112,8 @@ runs:
             --label org.label-schema.name="$ECR_REPOSITORY" \
             --label org.label-schema.version="$app_version" \
             --build-arg EB7_APP_VERSION=$app_version \
+            -f ${{ inputs.dockerfile-path }} \
+            $set_additional_build_args \
+            $set_secret \
             .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
