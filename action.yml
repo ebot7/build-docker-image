@@ -70,11 +70,13 @@ runs:
 
           if [ -n '${{ inputs.build-arg }}' ]
           then
+            echo "Using build argument: ${{ inputs.build-arg }}"
             additional_build_arg="--build-arg ${{ inputs.build-arg }}"
           fi
 
           if [ -n '${{ inputs.secret }}' ]
           then
+            echo "Using secret configuration: ${{ inputs.secret }}"
             additional_build_arg="--secret ${{ inputs.secret }}"
           fi
 
