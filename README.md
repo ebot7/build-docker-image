@@ -9,9 +9,16 @@ Use the following as a step in your Github workflows.
   with:
     app-name: <app-name>
     ecr-repository: ebot7/<app-name>
-    build-arg: 'FOO=123'
-    dockerfile-path: <some-path> // defaults to ./Dockerfile
-    aws-secret-access-key: {{ secrets.AWS_SECRET_ACCESS_KEY }}
-    aws-access-key-id: {{ secrets.AWS_ACCESS_KEY_ID }}
+    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 ```
 Replace `<app-name>` with appropriate string before running
+
+## Options
+
+- `app-name`: The name of the application. This will be removed soon but is currently needed for backwards-compatibility.
+- `ecr-repository`: the docker repository to which to push the image. Typically `ebot7/<app-name>`.
+- `build-arg`: Specify one build argument passed to Docker build. This should be in the format `ARG_NAME=value`. Empty by default.
+- `dockerfile-path`: The path to the Dockerfile relative to the repository root. Defaults to `./Dockerfile`.
+- `aws-access-key-id`: The AWS access key ID used to access the Docker registry.
+- `aws-secret-access-key`: The AWS secret access key used to access the Docker registry.
