@@ -7,11 +7,16 @@ inputs:
   app-name:
     required: true
     description: name of the app being built
-  build-arg:
+  build-args:
     required: false
     description: >
       additional build arguments to be passed when building the dockerfile.
-      This should have the form "ARG_NAME=value".
+      This should have the form "ARG_NAME=value". If several build arguments are required, 
+      delimit them by a newline 
+      "|
+        ARG_NAME_1=value
+        ARG_NAME_2=value2
+      "
   secret:
     required: false
     description: >
@@ -68,10 +73,18 @@ runs:
           # Pull images to make caching work.
           docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$branch || docker pull $ECR_REGISTRY/$ECR_REPOSITORY:master || true
 
-          if [ -n '${{ inputs.build-arg }}' ]
+          if [ -n '${{ inputs.build-args }}' ]
           then
-            echo "Using build argument: ${{ inputs.build-arg }}"
-            set_additional_build_arg="--build-arg ${{ inputs.build-arg }}"
+            build_args_unparsed=${{ inputs.build-args }}
+            # As of https://stackoverflow.com/questions/19771965/split-bash-string-by-newline-characters
+            IFS=$'\n' build_args_list=($build_args_unparsed)
+
+            set_additional_build_arg='' 
+            for item in ${build_args_list[@]}
+            do
+              set_additional_build_arg="${set_additional_build_arg} --build-arg ${item}"
+            done
+            echo "Using build argument(s): ${build_args_list}"
           fi
 
           if [ -n '${{ inputs.secret }}' ]
