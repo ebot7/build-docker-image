@@ -12,6 +12,12 @@ inputs:
     description: >
       additional build build arguments to be passed when building the dockerfile.
       This should have the form "ARG_NAME=value".
+  secret:
+    required: false
+    description: >
+      allow providing --secret to the docker build command.
+      See https://docs.docker.com/develop/develop-images/build_enhancements/#new-docker-build-secret-information
+      for required changes to the Dockerfile.
   aws-access-key-id:
     required: true
     description: aws creds to login to ecr repo
@@ -53,7 +59,6 @@ runs:
           APP_NAME: ${{ inputs.app-name }}
           COMMIT: ${{ steps.sha.outputs.sha_short}}
           BUILDKIT_INLINE_CACHE: 1
-          DOCKERFILE_PATH: ${{ inputs.dockerfile-path }}
         run: |
           app_version="${{ github.ref }}-${{ github.run_id }}-$COMMIT"
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
@@ -64,7 +69,12 @@ runs:
 
           if [ -n '${{ inputs.build-arg }}' ]
           then
-            additional_build_arg="--build-arg '${{ inputs.build-arg }}'"
+            additional_build_arg="--build-arg ${{ inputs.build-arg }}"
+          fi
+
+          if [ -n '${{ inputs.secret }}' ]
+          then
+            additional_build_arg="--secret ${{ inputs.secret }}"
           fi
 
           docker build \
@@ -84,7 +94,7 @@ runs:
             --label org.label-schema.name="$ECR_REPOSITORY" \
             --label org.label-schema.version="$app_version" \
             --build-arg EB7_APP_VERSION=$app_version \
-            -f $DOCKERFILE_PATH \
+            -f ${{ inputs.dockerfile-path }} \
             $additional_build_arg \
             .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
