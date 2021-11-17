@@ -81,7 +81,7 @@ runs:
 
           if [ -n '${{ inputs.build-args }}' ]
           then
-            build_args_unparsed=${{ inputs.build-args }}
+            build_args_unparsed='${{ inputs.build-args }}'
             # As of https://stackoverflow.com/questions/19771965/split-bash-string-by-newline-characters
             DEFAULT_IFS=$IFS
             IFS=$'\n' build_args_list=($build_args_unparsed)
