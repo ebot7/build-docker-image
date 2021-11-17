@@ -78,9 +78,6 @@ runs:
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
           branch=$(echo $ref | sed "s/refs\/heads\///g" | sed -r 's/[^-_.a-zA-Z0-9]+/_/g')
 
-          # Pull images to make caching work.
-          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$branch || docker pull $ECR_REGISTRY/$ECR_REPOSITORY:master || true
-
           if [ -n '${{ inputs.build-args }}' ]
           then
             build_args_unparsed='${{ inputs.build-args }}'
@@ -111,8 +108,6 @@ runs:
             -t tag_commit \
             -t tag_branch \
             -t tag_legacy \
-            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
-            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:master \
             --label io.eb7.git_branch="$branch" \
             --label io.eb7.app_version="$app_version" \
             --label io.eb7.service="$APP_NAME" \
