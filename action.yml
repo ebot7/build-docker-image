@@ -72,7 +72,7 @@ runs:
           BUILDKIT_INLINE_CACHE: 1
           DOCKER_BUILDKIT: 1
         run: |
-          ref=${{ github.base_ref }}
+          ref=${{ github.event.pull_request.head.ref }}
           [ -z "$ref" ] && ref=${{ github.ref }}
           app_version="$ref-${{ github.run_id }}-$COMMIT"
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
