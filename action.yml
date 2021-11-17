@@ -92,7 +92,7 @@ runs:
             do
               set_additional_build_args="${set_additional_build_args} --build-arg ${item}"
             done
-            echo "Using build argument(s): ${build_args_list}"
+            echo "Using build argument(s): ${build_args_list[*]}"
           fi
 
           if [ -n '${{ inputs.secret }}' ]
@@ -100,11 +100,15 @@ runs:
             echo "Using secret configuration: ${{ inputs.secret }}"
             set_secret="--secret ${{ inputs.secret }}"
           fi
-
+          
+          tag_commit="${ECR_REGISTRY}/${ECR_REPOSITORY}:${COMMIT}" # use this to deploy
+          tag_branch="${ECR_REGISTRY}/${ECR_REPOSITORY}:${branch}"
+          tag_legacy="${ECR_REGISTRY}/${ECR_REPOSITORY}:${APP_NAME}-${branch}-${COMMIT}"
+          echo "Building image with tags [${tag_commit}, ${tag_branch}, ${tag_legacy}]"
           docker build \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$APP_NAME-$branch-$COMMIT \
+            -t tag_commit \
+            -t tag_branch \
+            -t tag_legacy \
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:master \
             --label io.eb7.git_branch="$branch" \
