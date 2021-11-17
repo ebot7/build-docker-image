@@ -92,7 +92,7 @@ runs:
             do
               set_additional_build_args="${set_additional_build_args} --build-arg ${item}"
             done
-            echo "Using build argument(s): ${build_args_list}"
+            echo "Using build argument(s): ${build_args_list[*]}"
           fi
 
           if [ -n '${{ inputs.secret }}' ]
