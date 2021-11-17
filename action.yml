@@ -108,9 +108,9 @@ runs:
           tag_legacy="${ECR_REGISTRY}/${ECR_REPOSITORY}:${APP_NAME}-${branch}-${COMMIT}"
           echo "Building image with tags [${tag_commit}, ${tag_branch}, ${tag_legacy}]"
           docker build \
-            -t tag_commit \
-            -t tag_branch \
-            -t tag_legacy \
+            -t $tag_commit \
+            -t $tag_branch \
+            -t $tag_legacy \
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:master \
             --label io.eb7.git_branch="$branch" \
