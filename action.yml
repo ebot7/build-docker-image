@@ -4,9 +4,6 @@ inputs:
   ecr-repository:
     required: true
     description: name of the ecr namespace
-  app-name:
-    required: true
-    description: name of the app being built
   build-args:
     required: false
     description: >
@@ -67,7 +64,6 @@ runs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ inputs.ecr-repository }}
-          APP_NAME: ${{ inputs.app-name }}
           COMMIT: ${{ steps.sha.outputs.sha_short}}
           BUILDKIT_INLINE_CACHE: 1
           DOCKER_BUILDKIT: 1
@@ -108,14 +104,18 @@ runs:
           tag_legacy="${ECR_REGISTRY}/${ECR_REPOSITORY}:${APP_NAME}-${branch}-${COMMIT}"
           echo "Building image with tags [${tag_commit}, ${tag_branch}, ${tag_legacy}]"
           docker build \
+<<<<<<< HEAD
             -t $tag_commit \
             -t $tag_branch \
             -t $tag_legacy \
+=======
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
+>>>>>>> 9850710 (chore: AP-1004 remove redundant application name parameter.)
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:master \
             --label io.eb7.git_branch="$branch" \
             --label io.eb7.app_version="$app_version" \
-            --label io.eb7.service="$APP_NAME" \
             --label io.eb7.log_format=json \
             --label io.eb7.group=application \
             --label org.label-schema.schema-version="1.0.0-rc.1" \
