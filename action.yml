@@ -68,12 +68,8 @@ runs:
           BUILDKIT_INLINE_CACHE: 1
           DOCKER_BUILDKIT: 1
         run: |
-<<<<<<< HEAD
           ref=${{ github.event.pull_request.head.ref }}
           [ -z "$ref" ] && ref=${{ github.ref }}
-          app_version="$ref-${{ github.run_id }}-$COMMIT"
-=======
->>>>>>> 01adf54 (fix: remove automatic generation of the app version parameter.)
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
           branch=$(echo $ref | sed "s/refs\/heads\///g" | sed -r 's/[^-_.a-zA-Z0-9]+/_/g')
 
@@ -107,14 +103,8 @@ runs:
           tag_legacy="${ECR_REGISTRY}/${ECR_REPOSITORY}:${APP_NAME}-${branch}-${COMMIT}"
           echo "Building image with tags [${tag_commit}, ${tag_branch}, ${tag_legacy}]"
           docker build \
-<<<<<<< HEAD
             -t $tag_commit \
             -t $tag_branch \
-            -t $tag_legacy \
-=======
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
->>>>>>> 9850710 (chore: AP-1004 remove redundant application name parameter.)
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
             --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:master \
             --label io.eb7.git_branch="$branch" \
