@@ -97,4 +97,6 @@ runs:
           build-args: ${{ inputs.build-args }}
           file: ${{ inputs.dockerfile-path }}
           secrets: ${{ inputs.secret }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
