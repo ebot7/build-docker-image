@@ -61,62 +61,40 @@ runs:
 
       - name: Build, tag, and push docker image to Amazon ECR
         shell: bash
+        id: config
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ inputs.ecr-repository }}
           COMMIT: ${{ steps.sha.outputs.sha_short}}
-          BUILDKIT_INLINE_CACHE: 1
-          DOCKER_BUILDKIT: 1
         run: |
           ref=${{ github.event.pull_request.head.ref }}
           [ -z "$ref" ] && ref=${{ github.ref }}
           build_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")#
           branch=$(echo $ref | sed "s/refs\/heads\///g" | sed -r 's/[^-_.a-zA-Z0-9]+/_/g')
-
-          # Pull images to make caching work.
-          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$branch || docker pull $ECR_REGISTRY/$ECR_REPOSITORY:master || true
-
-          if [ -n '${{ inputs.build-args }}' ]
-          then
-            build_args_unparsed='${{ inputs.build-args }}'
-            # As of https://stackoverflow.com/questions/19771965/split-bash-string-by-newline-characters
-            DEFAULT_IFS=$IFS
-            IFS=$'\n' build_args_list=($build_args_unparsed)
-            IFS=$DEFAULT_IFS
-
-            set_additional_build_args=''
-            for item in ${build_args_list[@]}
-            do
-              set_additional_build_args="${set_additional_build_args} --build-arg ${item}"
-            done
-            echo "Using build argument(s): ${build_args_list[*]}"
-          fi
-
-          if [ -n '${{ inputs.secret }}' ]
-          then
-            echo "Using secret configuration: ${{ inputs.secret }}"
-            set_secret="--secret ${{ inputs.secret }}"
-          fi
           
           tag_commit="${ECR_REGISTRY}/${ECR_REPOSITORY}:${COMMIT}" # use this to deploy
           tag_branch="${ECR_REGISTRY}/${ECR_REPOSITORY}:${branch}"
           tag_branch_commit="${ECR_REGISTRY}/${ECR_REPOSITORY}:${branch}-${COMMIT}"
-          echo "Building image with tags [${tag_commit}, ${tag_branch}, ${tag_legacy}]"
-          docker build \
-            -t $tag_commit \
-            -t $tag_branch \
-            -t $tag_branch_commit \
-            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:$branch \
-            --cache-from $ECR_REGISTRY/$ECR_REPOSITORY:master \
-            --label io.eb7.git_branch="$branch" \
-            --label io.eb7.log_format=json \
-            --label io.eb7.group=application \
-            --label org.label-schema.schema-version="1.0.0-rc.1" \
-            --label org.label-schema.vendor="e-bot7 GmbH" \
-            --label org.label-schema.build-date="$build_timestamp" \
-            --label org.label-schema.name="$ECR_REPOSITORY" \
-            -f ${{ inputs.dockerfile-path }} \
-            $set_additional_build_args \
-            $set_secret \
-            .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
+
+          echo "::set-output name=tags::$tag_commit,$tag_branch,$tag_branch_commit"
+          echo "::set-output name=build_timestamp::$build_timestamp"
+          echo "::set-output name=branch::$branch"
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.config.outputs.tags}}
+          labels: |
+            io.eb7.git_branch="${{ steps.config.outputs.branch}}"
+            io.eb7.log_format=json
+            io.eb7.group=application
+            org.label-schema.schema-version="1.0.0-rc.1"
+            org.label-schema.vendor="e-bot7 GmbH"
+            org.label-schema.build-date="${{ steps.config.outputs.build_timestamp}}"
+            org.label-schema.name="$ECR_REPOSITORY"
+          build-args: ${{ inputs.build-args }}
+          file: ${{ inputs.dockerfile-path }}
+          secrets: ${{ inputs.secret }}
+
