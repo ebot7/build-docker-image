@@ -17,9 +17,8 @@ inputs:
   secret:
     required: false
     description: >
-      allow providing --secret to the docker build command.
-      See https://docs.docker.com/develop/develop-images/build_enhancements/#new-docker-build-secret-information
-      for required changes to the Dockerfile.
+      allow providing secret values,
+      see https://github.com/docker/build-push-action/blob/master/docs/advanced/secrets.md
   secret-files:
     required: false
     description: >
